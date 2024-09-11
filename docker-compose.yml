@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      target: dev
+    #    command: ["app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    environment:
+      - ENVIRONMENT=development
+    volumes:
+      - "./src:/app/src"
+      - "./poetry.lock:/app/poetry.lock"
+      - "./pyproject.toml:/app/pyproject.toml"
+      - "./README.md:/app/README.md"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16.2
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - "5434:${DB_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  postgres_data: { }
